@@ -1,4 +1,21 @@
-# Project env
- *.env
- .env
+# Environment files
 .env
+.env.local
+*.env
+
+# OS / IDEs
+.DS_Store
+.vscode/
+.idea/
+
+# Project Specifics
+node_modules/
+vendor/
+bin/
+.next/
+postgres_data/
+
+# Secrets and Certs
+*.pem
+*.key
+*.pub
