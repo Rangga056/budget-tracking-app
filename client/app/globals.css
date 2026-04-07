@@ -1,26 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors */
+  --surface: #f8f9fa;
+  --surface-container-low: #f3f4f5;
+  --surface-container-lowest: #ffffff;
+  --surface-container-high: #e7e8e9;
+  --surface-container-highest: #d9dadb;
+  --surface-dim: #d9dadb;
+  --primary: #674bb5;
+  --primary-container: #a78bfa;
+  --on-surface: #191c1d;
+  --outline-variant: #cac4d4;
+
+  /* Derived */
+  --background: var(--surface);
+  --foreground: var(--on-surface);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  /* Colors mapping */
+  --color-surface: var(--surface);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-surface-dim: var(--surface-dim);
+  --color-primary: var(--primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-surface: var(--on-surface);
+  --color-outline-variant: var(--outline-variant);
+
+  /* Typography */
+  --font-inter: "Inter", sans-serif;
+  --font-sans: var(--font-inter);
+
+  /* Custom text styles */
+  --text-display-lg: 3.5rem;
+  --text-display-lg--line-height: 1.2;
+  --text-display-lg--font-weight: 700;
+
+  --text-headline-sm: 1.5rem;
+  --text-headline-sm--line-height: 1.3;
+  --text-headline-sm--font-weight: 600;
+
+  --text-title-md: 1.125rem;
+  --text-title-md--line-height: 1.4;
+  --text-title-md--font-weight: 500;
+
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.5;
+  --text-body-md--font-weight: 400;
+
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1.6;
+  --text-label-md--font-weight: 600;
+
+  /* Spacing and Radius */
+  --radius-xl: 0.75rem;
+  --radius-lg: 0.5rem;
+
+  /* Shadows - Defining here makes 'shadow-ambient' a valid utility */
+  --shadow-ambient: 0 0 32px 0 rgba(25, 28, 29, 0.04);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base styles */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Utilities & Components */
+@utility glass {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+}
+
+@utility btn-primary {
+  @apply px-6 py-2.5 rounded-xl bg-primary-container text-on-surface font-semibold transition-all duration-300;
+  @apply hover:bg-gradient-to-br hover:from-[#674bb5] hover:to-[#a78bfa] hover:text-white;
+}
+
+@utility btn-secondary {
+  @apply px-4 py-2 text-label-md font-bold text-primary bg-transparent transition-colors;
+  @apply hover:text-primary/80;
+}
+
+@utility btn-tertiary {
+  @apply px-4 py-2 rounded-lg bg-surface-container-highest text-on-surface font-medium transition-colors;
+  @apply hover:bg-surface-dim;
+}
+
+@utility input-canvas {
+  @apply w-full bg-surface-container-lowest px-0 py-2 border-b-2 border-outline-variant transition-colors outline-none;
+  @apply focus:border-primary;
+}
+
+@utility focus-pane {
+  @apply bg-surface-container-lowest rounded-lg p-12 shadow-ambient;
 }

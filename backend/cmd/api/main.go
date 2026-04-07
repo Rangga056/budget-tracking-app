@@ -58,7 +58,11 @@ func main() {
 						dom_id: '#swagger-ui',
 						deepLinking: true,
 						presets: [ SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset ],
-						layout: "StandaloneLayout"
+						layout: "StandaloneLayout",
+						requestInterceptor: function(request) {
+							request.credentials = 'same-origin';
+							return request;
+						}
 					})
 				}
 				</script>
@@ -85,13 +89,29 @@ func main() {
 	api.Post("/logout", handlers.Logout)
 
 	// Protected Routes
-	api.Get("/me", middleware.Protected(), func(c fiber.Ctx) error {
+	protected := api.Group("", middleware.Protected())
+
+	protected.Get("/me", middleware.Protected(), func(c fiber.Ctx) error {
 		userID := c.Locals("user_id")
 		return c.JSON(fiber.Map{
 			"message": "You have successfully accessed a protected route",
 			"user_id": userID,
 		})
 	})
+
+	// Category Routes
+	protected.Post("/categories", handlers.CreateCategory)
+	protected.Get("/categories", handlers.GetCategories)
+
+	// Transaction Routes
+	protected.Post("/transactions", handlers.CreateTransaction)
+	protected.Get("/transactions", handlers.GetTransactions)
+
+	// Bulk Sync Route
+	protected.Post("/sync", handlers.SyncTransactions)
+
+	// Upload Route
+	protected.Post("/upload", handlers.UploadReceipt)
 
 	// start server
 	port := os.Getenv("PORT")

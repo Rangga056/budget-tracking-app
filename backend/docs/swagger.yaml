@@ -6,12 +6,136 @@ definitions:
       password:
         type: string
     type: object
+  models.Category:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.CategoryInput:
+    properties:
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  models.SyncPayload:
+    properties:
+      transacctions:
+        items:
+          $ref: '#/definitions/models.TransactionInput'
+        type: array
+    type: object
+  models.Transaction:
+    properties:
+      amount:
+        type: number
+      categoryID:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      receipt_url:
+        type: string
+      transaction_date:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.TransactionInput:
+    properties:
+      amount:
+        type: string
+      category_id:
+        type: string
+      description:
+        type: string
+      receipt_url:
+        type: string
+      transaction_date:
+        type: string
+    type: object
 host: localhost:8000
 info:
   contact: {}
   title: Budget Tracking App
   version: "1.0"
 paths:
+  /api/categories:
+    get:
+      description: Retrieves all categories belonging to the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of categories
+          schema:
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
+        "401":
+          description: Unauthenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get user categories
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      description: Creates a new income or expense category for the authenticated
+        user
+      parameters:
+      - description: Category Name and Type
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CategoryInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Category created successfully
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Invalid request body or type
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new category
+      tags:
+      - Categories
   /api/login:
     post:
       consumes:
@@ -112,4 +236,158 @@ paths:
       summary: Register a new user
       tags:
       - Authentication
+  /api/sync:
+    post:
+      consumes:
+      - application/json
+      description: Processes an array of transactions recorded while the user was
+        offline. Uses a database transaction to ensure all-or-nothing insertion.
+      parameters:
+      - description: Array of transactions
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SyncPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sync successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Bulk sync offline transactions
+      tags:
+      - Transactions
+  /api/transactions:
+    get:
+      description: Retrieves all transactions for the authenticated user, ordered
+        by date.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaction'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List user transactions
+      tags:
+      - Transactions
+    post:
+      consumes:
+      - application/json
+      description: Creates a single transaction. Receipt URL is optional.
+      parameters:
+      - description: Transaction Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.TransactionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Transaction created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add a new transaction
+      tags:
+      - Transactions
+  /api/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads an image file to the local server and returns the accessible
+        URL.
+      parameters:
+      - description: Receipt Image (JPEG/PNG)
+        in: formData
+        name: receipt
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns the receipt_url
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid file type or request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to save image
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload a transaction receipt
+      tags:
+      - Uploads
 swagger: "2.0"
