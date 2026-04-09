@@ -27,13 +27,23 @@ func CreateTransaction(c fiber.Ctx) error {
 	}
 
 	// NULLIF($5, '') ensures that if receipt_url is empty
-	query := `
-		INSERT INTO transactions (user_id, category_id, amount, description, receipt_url, transaction_date) 
-		VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6) RETURNING id
-	`
-
 	var newID string
-	err := config.DB.QueryRow(context.Background(), query, userID, input.Amount, input.Description, input.ReceiptURL, input.TransactionDate).Scan(&newID)
+	var err error
+
+	if input.ID != "" {
+		query := `
+			INSERT INTO transactions (id, user_id, category_id, amount, currency, description, receipt_url, transaction_date) 
+			VALUES ($1, $2, $3, $4, $5, $6, NULLIF($7, ''), $8) RETURNING id
+		`
+		err = config.DB.QueryRow(context.Background(), query, input.ID, userID, input.CategoryID, input.Amount, input.Currency, input.Description, input.ReceiptURL, input.TransactionDate).Scan(&newID)
+	} else {
+		query := `
+			INSERT INTO transactions (user_id, category_id, amount, currency, description, receipt_url, transaction_date) 
+			VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7) RETURNING id
+		`
+		err = config.DB.QueryRow(context.Background(), query, userID, input.CategoryID, input.Amount, input.Currency, input.Description, input.ReceiptURL, input.TransactionDate).Scan(&newID)
+	}
+
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to create transaction"})
 	}
@@ -56,7 +66,7 @@ func GetTransactions(c fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 
 	query := `
-		SELECT id, user_id, category_id, amount, description, COALESCE(receipt_url, ''), transaction_date, created_at 
+		SELECT id, user_id, category_id, amount, currency, description, COALESCE(receipt_url, ''), transaction_date, created_at 
 		FROM transactions WHERE user_id = $1 ORDER BY transaction_date DESC, created_at DESC
 	`
 
@@ -70,7 +80,7 @@ func GetTransactions(c fiber.Ctx) error {
 	for rows.Next() {
 		var t models.Transaction
 		// Use Scan() to map the row to struct
-		if err := rows.Scan(&t.ID, &t.UserID, &t.CategoryID, &t.Amount, &t.Description, &t.ReceiptURL, &t.TransactionDate, &t.CreatedAt); err == nil {
+		if err := rows.Scan(&t.ID, &t.UserID, &t.CategoryID, &t.Amount, &t.Currency, &t.Description, &t.ReceiptURL, &t.TransactionDate, &t.CreatedAt); err == nil {
 			// Clean timestamp format for json output
 			t.TransactionDate = t.TransactionDate[:10]
 			transactions = append(transactions, t)
@@ -113,15 +123,25 @@ func SyncTransactions(c fiber.Ctx) error {
 	}
 	defer tx.Rollback(context.Background())
 
-	query := `
-		INSERT INTO transactions (user_id, category_id, amount, description, receipt_url, transaction_date) 
-		VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6)
-	`
-
 	for _, input := range payload.Transactions {
-		_, err := tx.Exec(context.Background(), query, userID, input.CategoryID, input.Amount, input.Description, input.ReceiptURL, input.TransactionDate)
-		if err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": "Failed to sync a transaction"})
+		if input.ID != "" {
+			query := `
+				INSERT INTO transactions (id, user_id, category_id, amount, currency, description, receipt_url, transaction_date) 
+				VALUES ($1, $2, $3, $4, $5, $6, NULLIF($7, ''), $8)
+			`
+			_, err := tx.Exec(context.Background(), query, input.ID, userID, input.CategoryID, input.Amount, input.Currency, input.Description, input.ReceiptURL, input.TransactionDate)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": "Failed to sync a transaction"})
+			}
+		} else {
+			query := `
+				INSERT INTO transactions (user_id, category_id, amount, currency, description, receipt_url, transaction_date) 
+				VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7)
+			`
+			_, err := tx.Exec(context.Background(), query, userID, input.CategoryID, input.Amount, input.Currency, input.Description, input.ReceiptURL, input.TransactionDate)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": "Failed to sync a transaction"})
+			}
 		}
 	}
 

@@ -1,21 +1,25 @@
+# Dependencies
+node_modules/
+vendor/
+.next/
+bin/
+
 # Environment files
-.env
-.env.local
-*.env
+.env*
 
 # OS / IDEs
 .DS_Store
 .vscode/
 .idea/
 
-# Project Specifics
-node_modules/
-vendor/
-bin/
-.next/
+# Database data
 postgres_data/
 
 # Secrets and Certs
 *.pem
 *.key
 *.pub
+
+# Agents / Logs
+.agents
+*.log

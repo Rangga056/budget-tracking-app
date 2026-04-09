@@ -87,6 +87,9 @@ func main() {
 	api.Post("/register", handlers.Register)
 	api.Post("/login", handlers.Login)
 	api.Post("/logout", handlers.Logout)
+	api.Get("/verify-email", handlers.VerifyEmail)
+	api.Post("/forgot-password", handlers.ForgotPassword)
+	api.Post("/reset-password", handlers.ResetPassword)
 
 	// Protected Routes
 	protected := api.Group("", middleware.Protected())
@@ -102,6 +105,8 @@ func main() {
 	// Category Routes
 	protected.Post("/categories", handlers.CreateCategory)
 	protected.Get("/categories", handlers.GetCategories)
+	protected.Put("/categories/:id", handlers.UpdateCategory)
+	protected.Delete("/categories/:id", handlers.DeleteCategory)
 
 	// Transaction Routes
 	protected.Post("/transactions", handlers.CreateTransaction)

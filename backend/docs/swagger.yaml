@@ -5,6 +5,10 @@ definitions:
         type: string
       password:
         type: string
+      username:
+        type: string
+      username_or_email:
+        type: string
     type: object
   models.Category:
     properties:
@@ -35,9 +39,11 @@ definitions:
     properties:
       amount:
         type: number
-      categoryID:
+      category_id:
         type: string
-      createdAt:
+      created_at:
+        type: string
+      currency:
         type: string
       description:
         type: string
@@ -55,6 +61,8 @@ definitions:
       amount:
         type: string
       category_id:
+        type: string
+      currency:
         type: string
       description:
         type: string
@@ -136,13 +144,51 @@ paths:
       summary: Create a new category
       tags:
       - Categories
+  /api/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Initiates the password reset flow. Sends mock email.
+      parameters:
+      - description: 'Username or Email (key: username_or_email)'
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset link sent (if account exists)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Database error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Request password reset
+      tags:
+      - Authentication
   /api/login:
     post:
       consumes:
       - application/json
       description: Verifies credentials and issues a JWT via HttpOnly Cookie
       parameters:
-      - description: Email and Password
+      - description: Email/Username and Password
         in: body
         name: request
         required: true
@@ -169,6 +215,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "403":
+          description: Email not verified
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: User not found
           schema:
@@ -176,7 +228,7 @@ paths:
               type: string
             type: object
         "500":
-          description: Database or server error
+          description: Database error
           schema:
             additionalProperties:
               type: string
@@ -206,7 +258,7 @@ paths:
       description: Creates a new user account with the provided email and password,
         hashes the password securely, and stores the record in the PostgreSQL database.
       parameters:
-      - description: User registration credentials (email and password)
+      - description: User registration credentials
         in: body
         name: request
         required: true
@@ -228,12 +280,50 @@ paths:
               type: string
             type: object
         "500":
-          description: Internal server error or email already exists
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
             type: object
       summary: Register a new user
+      tags:
+      - Authentication
+  /api/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Sets a new password using a reset token
+      parameters:
+      - description: Token and NewPassword
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password updated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request body or expired token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset password
       tags:
       - Authentication
   /api/sync:
@@ -390,4 +480,37 @@ paths:
       summary: Upload a transaction receipt
       tags:
       - Uploads
+  /api/verify-email:
+    get:
+      description: Verifies a user's email address using a token sent to their email
+      parameters:
+      - description: Verification Token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified successfully!
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid or expired verification token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Database error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify email address
+      tags:
+      - Authentication
 swagger: "2.0"

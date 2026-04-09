@@ -115,6 +115,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/forgot-password": {
+            "post": {
+                "description": "Initiates the password reset flow. Sends mock email.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Request password reset",
+                "parameters": [
+                    {
+                        "description": "Username or Email (key: username_or_email)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset link sent (if account exists)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/login": {
             "post": {
                 "description": "Verifies credentials and issues a JWT via HttpOnly Cookie",
@@ -130,7 +188,7 @@ const docTemplate = `{
                 "summary": "Authenticate user",
                 "parameters": [
                     {
-                        "description": "Email and Password",
+                        "description": "Email/Username and Password",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -167,6 +225,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "403": {
+                        "description": "Email not verified",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "User not found",
                         "schema": {
@@ -177,7 +244,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Database or server error",
+                        "description": "Database error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -226,7 +293,7 @@ const docTemplate = `{
                 "summary": "Register a new user",
                 "parameters": [
                     {
-                        "description": "User registration credentials (email and password)",
+                        "description": "User registration credentials",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -255,7 +322,65 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal server error or email already exists",
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/reset-password": {
+            "post": {
+                "description": "Sets a new password using a reset token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset password",
+                "parameters": [
+                    {
+                        "description": "Token and NewPassword",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password updated successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or expired token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -494,6 +619,56 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/verify-email": {
+            "get": {
+                "description": "Verifies a user's email address using a token sent to their email",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify email address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Verification Token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email verified successfully!",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or expired verification token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -504,6 +679,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "username_or_email": {
                     "type": "string"
                 }
             }
@@ -553,10 +734,13 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
-                "categoryID": {
+                "category_id": {
                     "type": "string"
                 },
-                "createdAt": {
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
                     "type": "string"
                 },
                 "description": {
@@ -583,6 +767,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "category_id": {
+                    "type": "string"
+                },
+                "currency": {
                     "type": "string"
                 },
                 "description": {

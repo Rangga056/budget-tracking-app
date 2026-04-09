@@ -1,0 +1,19 @@
+# Go binaries
+bin/
+*.exe
+*.test
+*.prof
+
+# Project dependencies
+vendor/
+
+# Environment files
+.env
+*.env
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
