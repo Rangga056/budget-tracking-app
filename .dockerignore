@@ -15,11 +15,7 @@ bin/
 # Database data
 postgres_data/
 
-# Secrets and Certs
-*.pem
-*.key
-*.pub
-
-# Agents / Logs
-.agent
-*.log
+# Git
+.git
+.gitignore
+.dockerignore
